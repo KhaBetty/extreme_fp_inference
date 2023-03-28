@@ -21,7 +21,7 @@ Throughout this work, we used Ubuntu 18.04, Python 3.6.9, and NVIDIA TITAN V GPU
 To quantize the models, execute the following command:
 
 ```quantize
-python ./main.py -a resnet18_imagenet --action QUANTIZE --x_bits 5 --w_bits 5
+python ./main.py --arch resnet50_imagenet --action QUANTIZE --batch_size 32 --x_bits 5 --w_bits 5
 ```
 We support the following models: `resnet18_imagenet`, `resnet34_imagenet`, `resnet50_imagenet`, `resnet101_imagenet`, `googlenet_imagenet`, `inception_imagenet`, `densenet_imagenet`.
 
