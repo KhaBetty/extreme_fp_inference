@@ -17,7 +17,7 @@ python ./setup install
 The ImageNet path, as well as the seeds used to achieve the paper's results, are configured in `Config.py`.  
 Throughout this work, we used Ubuntu 18.04, Python 3.6.9, and NVIDIA TITAN V GPU.  
 
-## 8-bit Model Quantization
+## 5-bit Model Quantization
 
 To quantize the models, execute the following command:
 
