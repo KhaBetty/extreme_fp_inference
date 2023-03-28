@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import our_utils as fpQuant
 import os
 from time import time
+import copy
 
 def plot_activations(activation):
     fig = plt.figure(figsize = (12,8))
@@ -15,6 +16,20 @@ def plot_activations(activation):
     fig.savefig(os.path.join("./hists/", 'Activations_hist_{}.png'.format(time())))
     plt.close(fig)
 
+def sign_removal(x, input_dic, percantge):
+    """
+    sign removal when most of the values are positive.
+    percantge of the lowest values
+    """
+    x_calc = x.flatten()
+    k = int(percantge * x_calc.numel() / 100)
+    topk = torch.topk(x_calc,k,largest=False)
+    threshold = torch.max(topk[0]).item()
+    if threshold > 0:
+        input_dic['exponent'] = 0
+        x[x<0] = 0
+    return x, input_dic
+    
 class RoundSTE(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input):
@@ -62,15 +77,18 @@ class UnfoldConv2d(nn.Conv2d):
         self._reset_stats(self.stats)
 
     def forward(self, x):
-        x_input_order_bits = cfg.X_FP
-        w_input_order_bits = cfg.W_FP
-        sum_input_order_bits = cfg.SUM_FP
+        #percantge = 46
+        x_input_order_bits = copy.deepcopy(cfg.X_FP)
+        w_input_order_bits = copy.deepcopy(cfg.W_FP)
+        sum_input_order_bits = copy.deepcopy(cfg.SUM_FP)
         ieee_x = False
         ieee_w = False
         ieee_sum = False
         max_bias_x = True
         max_bias_w = True
-        max_bias_sum = True
+        max_bias_sum = False
+        w = self.weight
+        b = self.bias
         # Prepare activations, weights, and bias
         if self._quantize:
 
@@ -79,16 +97,17 @@ class UnfoldConv2d(nn.Conv2d):
                 tracked_n_old = self.tracked_n.clone()
                 self.tracked_n += x.size(0)
             # if there are no negative elements dont use the sign bit ad use max bias
-            if torch.min(x) < 0:
-                x_input_order_bits = cfg.SUM_FP
-
+            #x_s, x_input_order_bits = sign_removal(x, x_input_order_bits, percantge)
+            
+            
             x_q = fpQuant.closestQuant(fp_bits=self._x_bits, w=x, input_order_bits=x_input_order_bits, ieee=ieee_x, max_bias = max_bias_x)
             #x_q=x
             #plot_activations(x_q)
 
 
             # Weights quantization
-            w_q = fpQuant.closestQuant(fp_bits=self._w_bits, w=self.weight , input_order_bits=w_input_order_bits, ieee=ieee_w, max_bias = max_bias_w)
+            #w_s, w_input_order_bits = sign_removal(w, w_input_order_bits, percantge)
+            w_q = fpQuant.closestQuant(fp_bits=self._w_bits, w=w , input_order_bits=w_input_order_bits, ieee=ieee_w, max_bias = max_bias_w)
             #w_q=self.weight
 
 
@@ -96,7 +115,8 @@ class UnfoldConv2d(nn.Conv2d):
             if self.bias is None:
                 bias_fp = None
             else:
-                bias_fp = fpQuant.closestQuant(fp_bits=self._w_bits, w=self.bias , input_order_bits=w_input_order_bits, ieee=ieee_w, max_bias = max_bias_w)
+                #b_s, w_input_order_bits = sign_removal(b, w_input_order_bits, percantge)
+                bias_fp = fpQuant.closestQuant(fp_bits=self._w_bits, w=b , input_order_bits=w_input_order_bits, ieee=ieee_w, max_bias = max_bias_w)
                 #bias_fp=self.bias
 
         else:
@@ -110,6 +130,7 @@ class UnfoldConv2d(nn.Conv2d):
                                    bias=bias_fp,
                                    stride=(self.stride[0], self.stride[1]),
                                    padding=(self.padding[0], self.padding[1]), groups=self.groups)
+        #out_s, sum_input_order_bits = sign_removal(out, sum_input_order_bits, percantge)
         out_q = fpQuant.closestQuant(fp_bits=self._x_bits, w=out , input_order_bits=sum_input_order_bits, ieee=ieee_sum, max_bias = max_bias_sum) #TODO same size as x
         return out_q
 

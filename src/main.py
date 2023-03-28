@@ -53,6 +53,7 @@ def quantize_network(arch, dataset, train_gen, test_gen, model_chkp=None,
     cfg.LOG.write('X FP dict={}'.format(cfg.X_FP))
     cfg.LOG.write('W FP dict={}'.format(cfg.W_FP))
     cfg.LOG.write('SUM FP dict={}'.format(cfg.SUM_FP))
+    cfg.LOG.write('NO SIGN REMOVAL')
 
     # Initialize model
     nn = NeuralNet(arch, dataset, model_chkp=model_chkp)
@@ -145,22 +146,9 @@ def main():
 
     model_chkp = None if args.chkp is None else cfg.RESULTS_DIR + '/' + args.chkp
     x_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 4},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 3},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 2},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 1}]
-    w_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4},
-                 {'sign': 0, 'exponent': 1, 'mantissa': 3},
-                 {'sign': 0, 'exponent': 1, 'mantissa': 2},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 2},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 3},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 4}]
-    sum_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4},
-                 {'sign': 0, 'exponent': 1, 'mantissa': 3},
-                 {'sign': 0, 'exponent': 1, 'mantissa': 2},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 2},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 3},
-                 {'sign': 0, 'exponent': 0, 'mantissa': 4}]
+                  {'sign': 0, 'exponent': 0, 'mantissa': 2}]
+    w_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4}]
+    sum_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4}]
     if args.action == 'QUANTIZE':
         for x_fp in x_fp_list:
             for w_fp in w_fp_list:

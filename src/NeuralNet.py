@@ -117,7 +117,7 @@ class NeuralNet:
 
             if top1_acc > self.best_top1_acc:
                 self.best_top1_acc = top1_acc
-                self._save_state(epoch, desc=desc)
+               # self._save_state(epoch, desc=desc)
 
     def _train_step(self, train_gen, epoch, optimizer, iterations=None, bn_train=True):
         self.model.train()

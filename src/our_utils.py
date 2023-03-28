@@ -1,10 +1,22 @@
 import itertools
 import torch
 import pickle
+import glob
+import math
 
 with open('all_fp_dic.pkl','rb') as f:
     all_fp_dic = pickle.load(f)
-def binaryVec2number(num_vec ,input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, ieee= True, max_bias = True):
+    
+def find_bias(w):
+  w_abs = torch.abs(w)
+  max_w_abs = torch.max(w_abs).item()
+  max_exponent = math.log2(max_w_abs)
+  max_exponent = math.floor(max_exponent)
+  return max_exponent
+  
+      
+    
+def binaryVec2number(num_vec ,dyn_bias ,input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, ieee= True, max_bias = True):
     """
     Convert a binary vector to a number
     :param num_vec: binary vector after quantization
@@ -26,9 +38,9 @@ def binaryVec2number(num_vec ,input_order_bits = {'sign': 0, 'exponent': 1, 'man
     num_of_mantissa_bits = len(num_vec[mantissa_bits:])
     num_of_exponent_bits = mantissa_bits-exponent_bits
     if max_bias:
-        bias = 2**(num_of_exponent_bits) - 1
+        bias = 2**(num_of_exponent_bits) - 1 - dyn_bias
     else:
-        bias = 2**(num_of_exponent_bits - 1) - 1
+        bias =  2**(num_of_exponent_bits) - 1  # 2**(num_of_exponent_bits - 1) - 1 - was the defualt but we changed to our defualt (with max bias until 1 representation)
     # if eponent is all ones - it's NAN
     max_exponent = 2**(num_of_exponent_bits) - 1
     # get the mantissa bits
@@ -40,7 +52,7 @@ def binaryVec2number(num_vec ,input_order_bits = {'sign': 0, 'exponent': 1, 'man
         return  0
     return (-1)**sign * 2**(exponent - bias) * (1 + mantissa * 2**(-num_of_mantissa_bits))
 
-def quantWeights(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, ieee = True, max_bias = True):
+def quantWeights(fp_bits, w, dyn_bias, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, ieee = True, max_bias = True):
     """
     Convert a weight tensor to a quantisezed tensor
     :param fp_bits: number of bits in quantisezed fp
@@ -52,7 +64,7 @@ def quantWeights(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mant
     exponent_bits = input_order_bits['exponent']
     mantissa_bits = input_order_bits['mantissa']
     # key for pkl dictionary
-    fp_input_order_bits_tup = (fp_bits, sign_bits,exponent_bits,mantissa_bits, ieee, max_bias)
+    fp_input_order_bits_tup = (fp_bits, sign_bits,exponent_bits,mantissa_bits, ieee, max_bias, dyn_bias)
     # number of possible fp numbers
     tensor_size = 2**fp_bits
     if fp_input_order_bits_tup in all_fp_dic:
@@ -65,7 +77,7 @@ def quantWeights(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mant
         # calculate for each binary the right fp
         for i,vec in enumerate(all_vecs):
             vec_str = "".join(map(str,list(vec)))
-            all_fp_numbers[i] = (binaryVec2number(vec_str, input_order_bits, ieee, max_bias))
+            all_fp_numbers[i] = (binaryVec2number(vec_str, dyn_bias, input_order_bits, ieee, max_bias))
         # sort 
         s_all_fp_numbers,_ = torch.sort(all_fp_numbers)
         all_fp_dic[fp_input_order_bits_tup] = s_all_fp_numbers
@@ -88,7 +100,8 @@ def closestQuant(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mant
 	:param input_order_bits: bits order in the vector
 	:return: closest quantisezed weights tensor
     """
-    q_up, q_down = quantWeights(fp_bits, w, input_order_bits ,ieee , max_bias)
+    dyn_bias = find_bias(w)
+    q_up, q_down = quantWeights(fp_bits, w,dyn_bias, input_order_bits  ,ieee , max_bias)
     diff_up = torch.abs(w - q_up)
     diff_down = torch.abs(w - q_down)
     # compare l1 errors and return mask tensor of the closest quantization
@@ -110,12 +123,13 @@ def clacQuantError(w,w_quant):
 
 
 
-#fp_bits = 8
-#w = torch.tensor([[1.437,1.38], [-1.378,-1.42]]).cuda()
+#fp_bits = 5
+#w = torch.tensor([[0.005,0.8], [-0.008,-0.002]]).cuda()
 #q_up, q_down = quantWeights(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4},ieee=False)
 #print("round up:\n",q_up)
 #print("round down:\n",q_down)
-#print("round closets:\n",closestQuant(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 6}))
+#print("round closets:\n",closestQuant(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, max_bias=False))
+#print("round closets:\n",closestQuant(fp_bits, w, input_order_bits = {'sign': 0, 'exponent': 1, 'mantissa': 4}, max_bias=True))
 #l1errUp, l2errUp = clacQuantError(w,q_up)
 #l1errDown, l2errDown = clacQuantError(w,q_down)
 #print("quant error for Up: l1: ", l1errUp, " l2: ", l2errUp)

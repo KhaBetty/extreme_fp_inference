@@ -1,6 +1,0 @@
-[2023-03-13_17-16-54] main_our.py --action QUANTIZE --arch resnet50_imagenet --batch_size 32 --gpu 0 --x_bits 8 --w_bits 8 --boris 1
-
-[2023-03-13_17-16-54] desc=None, x_bits=8, w_bits=5
-[2023-03-13_17-16-54] __init__: arch=resnet50, dataset=imagenet, model_chkp=None, pretrained=True
-[2023-03-13_17-16-55] train_pred: epochs=1, lr=0, lr_plan=None, momentum=0.9, wd=0.0005, batch_size=32, optimizer=SGD
-[2023-03-13_17-16-55] lr=0, running train steps with no_grad()
