@@ -3,11 +3,10 @@
 
 ## Requirements
 
-Install PyTorch. Specifically, we use version 1.5.1 with CUDA 10.1.
+Install PyTorch. Specifically, we use version 1.6.0 with CUDA 10.1.
 ```pytorch
-pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 ```
-Pick PyTorch 1.5.1 with the appropriate CUDA version from the [official PyTorch website](https://pytorch.org/).  
 Then, install the other packages and our custom CUDA package:
 ```setup
 pip install -r requirements.txt
