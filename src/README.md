@@ -26,3 +26,9 @@ python ./main.py -a resnet18_imagenet --action QUANTIZE --x_bits 8 --w_bits 8
 ```
 We support the following models: `resnet18_imagenet`, `resnet34_imagenet`, `resnet50_imagenet`, `resnet101_imagenet`, `googlenet_imagenet`, `inception_imagenet`, `densenet_imagenet`.
 
+## run command in our modification
+
+The running command same as mentioned above.
+* For running in real dynamic bias setup change in file `QuantConv2d.py` change flag `max_bias_sum = False`.
+* For running in dynamic bias setup change in file `QuantConv2d.py` change flag `max_bias_sum = True`.
+* For changing the mantissa sizes change in file `Config.py` change dictionary X_FP, W_FP, SUM_FP.
