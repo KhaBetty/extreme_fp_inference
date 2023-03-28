@@ -145,21 +145,8 @@ def main():
     train_gen, _ = dataset_.trainset(batch_size=args.batch_size)
 
     model_chkp = None if args.chkp is None else cfg.RESULTS_DIR + '/' + args.chkp
-    x_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4},
-                  {'sign': 0, 'exponent': 0, 'mantissa': 2}]
-    w_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4}]
-    sum_fp_list = [{'sign': 0, 'exponent': 1, 'mantissa': 4}]
     if args.action == 'QUANTIZE':
-        for x_fp in x_fp_list:
-            for w_fp in w_fp_list:
-                for sum_fp in sum_fp_list:
-                    cfg.X_FP = x_fp
-                    cfg.W_FP = w_fp
-                    cfg.SUM_FP = sum_fp
-                    quantize_network(arch, dataset, train_gen, test_gen,
-                         model_chkp=model_chkp,
-                         x_bits=args.x_bits, w_bits=args.w_bits, desc=args.desc)
-
+        quantize_network(arch, dataset, train_gen, test_gen, model_chkp=model_chkp, x_bits=args.x_bits, w_bits=args.w_bits, desc=args.desc)
     elif args.action == 'INFERENCE':
         inference(arch, dataset, train_gen, test_gen,
                   model_chkp=model_chkp,
