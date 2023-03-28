@@ -39,6 +39,6 @@ DATASETS = {'cifar10':
                 {'ptr': ImageNet, 'dir': '/mnt/ilsvrc2012'}}
 LOG = Logger()
 
-X_FP =  {'sign': 0, 'exponent': 1, 'mantissa': 4}
+X_FP =  {'sign': 0, 'exponent': 0, 'mantissa': 2}
 W_FP =  {'sign': 0, 'exponent': 1, 'mantissa': 4}
 SUM_FP =  {'sign': 0, 'exponent': 1, 'mantissa': 4}
